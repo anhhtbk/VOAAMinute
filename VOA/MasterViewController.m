@@ -10,6 +10,8 @@
 #import "TFHpple.h"
 #import "Config.h"
 #import "Item.h"
+#import "UIImageView+AFNetworking.h"
+#import "DetailViewController.h"
 
 @interface MasterViewController () <UITableViewDataSource, UITableViewDelegate>
 {
@@ -38,29 +40,43 @@
     
     TFHpple *parser = [TFHpple hppleWithHTMLData:htmlData];
     
-    NSString *xpathQuerry = @"//div[@class='row']/ul/li";
+    NSString *xpathQuerry = @"//div[@class='media-block with-date width-img size-3']";
     NSArray *nodes = [parser searchWithXPathQuery:xpathQuerry];
     
     NSMutableArray *newData = [[NSMutableArray alloc] initWithCapacity:0];
+    
     for (TFHppleElement *element in nodes) {
         Item *item = [Item new];
         [newData addObject:item];
-        
         for (TFHppleElement *child in element.children) {
-            if ([child.tagName isEqualToString:@"h4"]) {
-                item.title = [[child firstChild] content];
+            if ([child.tagName isEqualToString:@"a"]) {
+                for (TFHppleElement *childChild in [child childrenWithTagName:@"div"]) {
+                    for (TFHppleElement *ccc in [childChild childrenWithTagName:@"img"]) {
+                        item.image = [ccc objectForKey:@"src"];
+                        break;
+                    }
+                }
             }
-            if ([child.tagName isEqualToString:@"img"]) {
-                item.image = [child objectForKey:@"src"];
+            if ([child.tagName isEqualToString:@"div"]) {
+                for (TFHppleElement *cc in [child childrenWithTagName:@"a"]) {
+                    item.url = [URL_HOME stringByAppendingString:[cc objectForKey:@"href"]];
+                    for (TFHppleElement *ccc in [cc childrenWithTagName:@"h4"]) {
+                        for (TFHppleElement *c4 in [ccc childrenWithTagName:@"span"]) {
+                            item.title = [[c4 content] stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%@: ", self.title] withString:@""];
+                            break;
+                        }
+                        
+                    }
+                    
+                }
             }
         }
         
-        
-        item.url = [element objectForKey:@"href"];
     }
     
     data = newData;
     [masterTableView reloadData];
+    masterTableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];
 }
 
 #pragma mark -UITableViewDelegate
@@ -77,11 +93,16 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     }
-    
+    UIImageView *imageView = (UIImageView *)[cell viewWithTag:201];
     Item *thisItem = [data objectAtIndex:indexPath.row];
-    cell.textLabel.text = thisItem.url;
+    [imageView setImageWithURL:[NSURL URLWithString:thisItem.image]];
+    cell.textLabel.text = thisItem.title;
     
     return cell;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return 90;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
@@ -95,8 +116,9 @@
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
     if ([segue.identifier isEqualToString:@"gotoDetailiewSegueId"]) {
         Item *selectedItem = [data objectAtIndex:masterTableView.indexPathForSelectedRow.row];
-        MasterViewController *masterView = segue.destinationViewController;
-        masterView.masterUrl = selectedItem.url;
+        DetailViewController *detailView = segue.destinationViewController;
+        detailView.detailUrl = selectedItem.url;
+        detailView.title = selectedItem.title;
     }
 }
 @end

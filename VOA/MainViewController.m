@@ -41,21 +41,31 @@
     
     TFHpple *parser = [TFHpple hppleWithHTMLData:htmlData];
     
-    NSString *xpathQuerry = @"//div[@class='menu']/ul/li/a";
+    NSString *xpathQuerry = @"//li [@class='block-primary collapsed collapsible item']/div/ul";
     NSArray *nodes = [parser searchWithXPathQuery:xpathQuerry];
     
     NSMutableArray *newData = [[NSMutableArray alloc] initWithCapacity:0];
     
-    for (TFHppleElement *element in nodes) {
-        Item *item = [Item new];
-        [newData addObject:item];
+    TFHppleElement *videos = [nodes firstObject];
+    
+    NSArray *videosArray = [videos childrenWithTagName:@"li"];
+    
+    for (TFHppleElement *element in videosArray) {
+        for (TFHppleElement *child in element.children) {
+            if ([child.tagName isEqualToString:@"a"]) {
+                Item *item = [Item new];
+                [newData addObject:item];
+                
+                item.title = [[child firstChild] content];
+                item.url = [URL_HOME stringByAppendingString:[child objectForKey:@"href"]];
+            }
+        }
         
-        item.title = [[element firstChild] content];
-        item.url = [element objectForKey:@"href"];
     }
     
     data = newData;
     [homeTableView reloadData];
+    homeTableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];
 }
 
 #pragma mark -UITableViewDelegate
@@ -93,6 +103,7 @@
         Item *selectedItem = [data objectAtIndex:homeTableView.indexPathForSelectedRow.row];
         MasterViewController *masterView = segue.destinationViewController;
         masterView.masterUrl = selectedItem.url;
+        masterView.title = selectedItem.title;
     }
 }
 
