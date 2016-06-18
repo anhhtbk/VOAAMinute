@@ -191,6 +191,7 @@
                     </view>
                     <navigationItem key="navigationItem" title="Detail" id="3KU-L4-itS"/>
                     <connections>
+                        <outlet property="noteTextView" destination="TMq-bU-Qod" id="Grd-Ft-996"/>
                         <outlet property="playerView" destination="u90-kN-IZm" id="sjg-97-jGG"/>
                     </connections>
                 </viewController>

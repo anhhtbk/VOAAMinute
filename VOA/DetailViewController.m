@@ -10,12 +10,15 @@
 #import "VKVideoPlayer.h"
 #import "TFHpple.h"
 #import "Config.h"
+//#import "VideoPlayerKit.h"
 
 @interface DetailViewController () <VKVideoPlayerDelegate>
 {
     IBOutlet UIView *playerView;
     VKVideoPlayer *vkPlayer;
+//    VideoPlayerKit *playerKit;
     NSURL *urlVideo;
+    IBOutlet UITextView *noteTextView;
 }
 @end
 
@@ -26,14 +29,37 @@
     vkPlayer = [[VKVideoPlayer alloc] initWithVideoPlayerView:[VKVideoPlayerView new]];
     vkPlayer.delegate = self;
     vkPlayer.view.frame = playerView.bounds;
+    vkPlayer.view.fullscreenButton.hidden = NO;
     [playerView addSubview:vkPlayer.view];
+    
+    
     [self loadVideo];
+    
+    UIToolbar* keyboardToolbar = [[UIToolbar alloc]initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 50)];
+    keyboardToolbar.barStyle = UIBarStyleDefault;
+    keyboardToolbar.items = [NSArray arrayWithObjects:
+                             [[UIBarButtonItem alloc]initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelWithKeyBoard)],
+                             [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil],
+                             [[UIBarButtonItem alloc]initWithTitle:@"Save" style:UIBarButtonItemStyleDone target:self action:@selector(doneWithKeyBoard)],
+                             nil];
+    [keyboardToolbar sizeToFit];
+    noteTextView.inputAccessoryView = keyboardToolbar;
+    
+    
+}
+
+-(void)cancelWithKeyBoard{
+    [self.view endEditing:YES];
+}
+
+-(void)doneWithKeyBoard{
+    [self.view endEditing:YES];
 }
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     VKVideoPlayerTrack *track = [[VKVideoPlayerTrack alloc] initWithStreamURL:urlVideo];
-    track.hasNext = YES;
+//    track.hasNext = YES;
     [vkPlayer loadVideoWithTrack:track];
 }
 
@@ -58,26 +84,32 @@
         }
         
     }
-    
-}
-
-- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration{
-    switch (toInterfaceOrientation) {
-        case UIInterfaceOrientationLandscapeLeft:
-            [self.navigationController setNavigationBarHidden:YES animated:YES];
-             vkPlayer.view.frame = CGRectMake(0, 0, 568, 320);
-            break;
-        case UIInterfaceOrientationLandscapeRight:
-            [self.navigationController setNavigationBarHidden:YES animated:YES];
-             vkPlayer.view.frame = CGRectMake(0, 0, 568, 320);
-            break;
-        case UIInterfaceOrientationPortrait:
-            [self.navigationController setNavigationBarHidden:NO animated:YES];
-             vkPlayer.view.frame = playerView.bounds;
-            break;
-        default:
-            break;
+    if (!urlVideo) {
+        xpathQuerry = @"//div[@class='player-and-links']/div/a";
+        nodes = [parser searchWithXPathQuery:xpathQuerry];
+        for (TFHppleElement *element in nodes) {
+            urlVideo = [NSURL URLWithString:[element objectForKey:@"href"]];
+        }
     }
 }
+//
+//- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration{
+//    switch (toInterfaceOrientation) {
+//        case UIInterfaceOrientationLandscapeLeft:
+//            [self.navigationController setNavigationBarHidden:YES animated:YES];
+//             vkPlayer.view.frame = CGRectMake(0, 0, 568, 320);
+//            break;
+//        case UIInterfaceOrientationLandscapeRight:
+//            [self.navigationController setNavigationBarHidden:YES animated:YES];
+//             vkPlayer.view.frame = CGRectMake(0, 0, 568, 320);
+//            break;
+//        case UIInterfaceOrientationPortrait:
+//            [self.navigationController setNavigationBarHidden:NO animated:YES];
+//             vkPlayer.view.frame = playerView.bounds;
+//            break;
+//        default:
+//            break;
+//    }
+//}
 
 @end
